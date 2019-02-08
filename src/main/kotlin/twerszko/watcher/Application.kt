@@ -97,11 +97,8 @@ class Application : Runnable {
             searchIntervalMs = searchIntervalMs,
             searchTries = searchTries
     )
+}
 
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            CommandLine.run(Application(), System.err, *args)
-        }
-    }
+fun main(args: Array<String>) {
+    CommandLine.run(Application(), System.err, *args)
 }
