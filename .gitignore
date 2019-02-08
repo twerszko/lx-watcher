@@ -1,0 +1,17 @@
+.idea/
+*.iml
+
+build/
+out/
+.gradle/
+
+*.jar
+*.war
+*.ear
+
+chromedriver
+channels.txt
+
+log.txt
+
+!gradle/wrapper/gradle-wrapper.jar
