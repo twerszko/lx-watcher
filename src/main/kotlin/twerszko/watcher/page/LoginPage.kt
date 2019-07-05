@@ -13,6 +13,7 @@ class LoginPage(private val webDriver: WebDriver, private val baseUrl: String) {
         loginForm().findElement(By.id("Login")).sendKeys(login)
         makeVisible(webDriver, "Password")
         loginForm().findElement(By.id("Password")).sendKeys(password)
+        loseFocus()
         loginButton().click()
 
         return Search(webDriver, baseUrl)
@@ -20,6 +21,10 @@ class LoginPage(private val webDriver: WebDriver, private val baseUrl: String) {
 
     private fun loginForm(): WebElement {
         return webDriver.findElement(By.name("loginForm"))
+    }
+
+    private fun loseFocus() {
+        webDriver.findElement(By.id("PageContainerWrapper")).click()
     }
 
     private fun loginButton() = loginForm().findElement(By.xpath(".//input[@type='submit']"))

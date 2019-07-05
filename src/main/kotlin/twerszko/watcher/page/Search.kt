@@ -9,7 +9,9 @@ import twerszko.watcher.SearchOptions
 import twerszko.watcher.Visit
 import twerszko.watcher.VisitType
 import twerszko.watcher.notifier.Notifier
+import twerszko.watcher.util.PageUtils.click
 import twerszko.watcher.util.PageUtils.clickIfPossible
+import twerszko.watcher.util.PageUtils.runJs
 import twerszko.watcher.util.PageUtils.setValue
 import twerszko.watcher.util.Try
 import java.lang.Math.max
@@ -32,6 +34,7 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
     }
 
     fun search(options: SearchOptions, notifier: Notifier) {
+        captureLink()
         webDriver.get(createUrl(baseUrl, options.visitType))
         waitUntilSpinnerDisappears()
 
@@ -42,8 +45,9 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
 
         for (i in 0 until options.searchTries) {
             log.info("Searching. Try ${i + 1}/${options.searchTries}")
-            searchButton().click()
+            click { searchButton() }
             waitUntilSpinnerDisappears()
+            waitUntilDataAvailable()
             log.info("Processing results")
             val results = processResults()
             log.info("Calling notifiers")
@@ -54,8 +58,16 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
 
     }
 
+    private fun waitUntilDataAvailable() {
+        Try { webDriver.findElements(By.id("data-container")) }
+                .atMost(5)
+                .waiting(2_000)
+                .until { elements -> elements.size > 0 }
+    }
+
     private fun processResults(): List<Visit> {
-        return days().flatMap { createDayVisits(it) }
+        val days = days()
+        return days.flatMap { createDayVisits(it) }
     }
 
     private fun createDayVisits(dayTitle: WebElement): List<Visit> {
@@ -84,8 +96,7 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
     }
 
     private fun days(): List<WebElement> {
-        val results = webDriver.findElement(By.id("foundTermsDiv"))
-        return results.findElements(By.xpath(".//div[@class='title']"))
+        return webDriver.findElement(By.id("data-container")).findElements(By.xpath(".//div[@class='title']"))
     }
 
     private fun parentContent(dayTitle: WebElement): List<WebElement> {
@@ -111,6 +122,11 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
         return webDriver.findElement(By.id("advancedResevation"))
     }
 
+    private fun captureLink() {
+        // Prevents automating logout on page unload
+        runJs(webDriver, "captureLink()")
+    }
+
     private fun createUrl(baseUrl: String, visitType: VisitType): String {
         return "$baseUrl$URL_SEARCH${visitType.actionId}"
     }
@@ -119,7 +135,7 @@ class Search internal constructor(private val webDriver: WebDriver, private val 
         Try { searchForm() }
                 .atMost(5)
                 .waiting(2_000)
-                .until { searchForm -> clickIfPossible(searchForm) }
+                .until { searchForm -> clickIfPossible(webDriver, searchForm) }
     }
 
     companion object {
